@@ -1,129 +1,109 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 from src.demand_forecasting.forecaster import DemandForecaster
+from src.warehouse_mgmt.slotting_optimizer import SlottingOptimizer
 from src.transport_control.carbon_tracker import TransportTracker
 from src.digital_twin.resilience_sim import SupplyChainTwin
 
 # --- CONFIGURATION PROFESSIONNELLE ---
-st.set_page_config(
-    page_title="S.C.E | Supply Chain Engine 4.0",
-    page_icon="🏗️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="S.C.E | Industrial Intelligence", page_icon="🏗️", layout="wide")
 
-# Style CSS personnalisé pour un look épuré
 st.markdown("""
     <style>
-    .main { background-color: #f5f7f9; }
     .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR DE NAVIGATION ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.title("S.C.E 4.0")
+    st.subheader("Pilotage de la Performance")
+    menu = st.radio("Sélecteur de Module", 
+                    ["Dashboard Global", "Demand Planning", "Warehouse Ops", "Transport & CO2", "Digital Twin"])
     st.markdown("---")
-    menu = st.radio(
-        "Navigation Modules",
-        ["Dashboard Global", "Demand Planning", "Warehouse Ops", "Transport & CO2", "Digital Twin"],
-        index=0
-    )
-    st.markdown("---")
-    st.info("Développeur : Elvis C. Kafui CRINOT")
+    st.write(" *Outil de proactivité industrielle*")
 
-# --- CONTENU PAR MODULE ---
-
+# --- 1. DASHBOARD GLOBAL ---
 if menu == "Dashboard Global":
-    st.title("Tableau de Bord Industriel")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Fiabilité Prévision", "94.2%", "+1.5%")
-    col2.metric("Efficacité Stock", "88%", "-2.0%")
-    col3.metric("Empreinte CO2 (Mo)", "1,240 kg", "-12%")
-    col4.metric("Score Résilience", "A+", "Stable")
-    
-    st.markdown("### Flux Logistique Temps Réel")
-    # Simulation d'un graphique de flux pour l'attractivité
-    chart_data = pd.DataFrame(np.random.randn(20, 3), columns=['Production', 'Demande', 'Stocks'])
-    st.area_chart(chart_data)
+    st.title("Tableau de Bord de Pilotage")
+    st.info("Intégrez vos données dans les modules spécifiques pour voir vos KPIs réels ici.")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Optimisation Stock", "En attente", "0%")
+    col2.metric("Réduction CO2", "Objectif 2026", "-15%")
+    col3.metric("Indice de Résilience", "Sécurisé", "Stable")
 
+# --- 2. DEMAND PLANNING (IA) ---
 elif menu == "Demand Planning":
-    st.header("Intelligence Prédictive (Demand Forecasting)")
-    with st.container():
-        col_in, col_out = st.columns([1, 2])
-        with col_in:
-            st.subheader("Paramètres")
-            last_sales = st.number_input("Ventes N-1", value=1200)
-            month = st.slider("Mois cible", 1, 12, 5)
-            if st.button("Lancer l'Analyse ML"):
-                forecaster = DemandForecaster()
-                prediction = last_sales * (1 + np.random.uniform(-0.05, 0.15))
-                st.session_state['pred'] = prediction
+    st.header("Intelligence Prédictive & Anticipation")
+    uploaded_sales = st.file_uploader("Importer l'historique des ventes (CSV)", type="csv")
+    
+    if uploaded_sales:
+        df_sales = pd.read_csv(uploaded_sales)
+        st.success("Données de vente intégrées.")
+        st.line_chart(df_sales.set_index(df_sales.columns[0]))
+        st.write(" **Avantage Financier :** Une prévision précise réduit les coûts de stockage de 15%.")
+    else:
+        st.info("Mode Simulation : Entrez une valeur manuellement.")
+        last_val = st.number_input("Dernières ventes", value=1000)
+        st.metric("Prédiction Prochaine Période", f"{int(last_val * 1.08)} unités")
 
-        with col_out:
-            if 'pred' in st.session_state:
-                st.success(f"Demande projetée : {st.session_state['pred']:.0f} unités")
-                # Graphique prédictif
-                pred_df = pd.DataFrame({
-                    'Période': ['N-2', 'N-1', 'N (Prédit)'],
-                    'Volume': [last_sales*0.9, last_sales, st.session_state['pred']]
-                })
-                fig = px.bar(pred_df, x='Période', y='Volume', color='Période', title="Évolution de la demande")
-                st.plotly_chart(fig, use_container_width=True)
+# --- 3. WAREHOUSE OPS (SLOTTING) ---
+elif menu == "Warehouse Ops":
+    st.header("Optimisation du Picking (Slotting ABC)")
+    uploaded_wms = st.file_uploader("Importer les mouvements de stock (CSV)", type="csv")
+    
+    if uploaded_wms:
+        optimizer = SlottingOptimizer()
+        df_wms = pd.read_csv(uploaded_wms)
+        optimizer.data = df_wms
+        results = optimizer.calculate_abc_segmentation()
+        
+        col_a, col_b = st.columns(2)
+        with col_a:
+            fig = px.pie(results, values='quantity_out', names='abc_class', hole=.4, title="Répartition ABC")
+            st.plotly_chart(fig)
+        with col_b:
+            st.write(" **Top 5 SKUs Prioritaires**")
+            st.table(results[results['abc_class']=='A'].head(5))
+        
+        st.success(" **Gain Productivité :** Le repositionnement des articles A peut réduire les temps de marche de 25%.")
+    else:
+        st.warning("Importez un fichier CSV (colonnes: sku_id, quantity_out) pour calculer vos gains.")
 
+# --- 4. TRANSPORT & CO2 ---
 elif menu == "Transport & CO2":
-    st.header("Contrôle de l'Empreinte Carbone")
-    col_t1, col_t2 = st.columns(2)
-    with col_t1:
-        w = st.number_input("Poids (tonnes)", value=15.0)
-        d = st.number_input("Distance (km)", value=850.0)
-        m = st.selectbox("Mode", ["truck", "ship", "plane", "train"])
+    st.header("Calculateur d'Impact Carbone")
+    uploaded_trans = st.file_uploader("Importer le registre des transports", type="csv")
     
-    tracker = TransportTracker()
-    co2 = tracker.calculate_carbon_footprint(w, d, m)
-    
-    with col_t2:
-        st.metric("Total CO2", f"{co2} kg")
-        st.progress(min(co2/2000, 1.0)) # Barre de progression de l'impact
-        st.caption("Seuil d'alerte : 2000 kg par expédition")
+    if uploaded_trans:
+        df_t = pd.read_csv(uploaded_trans)
+        tracker = TransportTracker()
+        results = tracker.analyze_fleet_impact(df_t)
+        st.dataframe(results.head(10))
+        st.metric("Total Émissions CO2", f"{results['co2_emissions'].sum():.2f} kg")
+    else:
+        st.info("Entrez une simulation rapide :")
+        w = st.number_input("Poids (Tonnes)", 10)
+        d = st.number_input("Distance (km)", 500)
+        st.write(f"Estimation : {w * d * 0.105} kg CO2 (Camion)")
 
+# --- 5. DIGITAL TWIN (RÉSILIENCE) ---
 elif menu == "Digital Twin":
-    st.header("Simulateur de Résilience (Jumeau Numérique)")
-    st.warning("Mode Stress-Test Activé")
-    delay = st.select_slider("Gravité du retard fournisseur (jours)", options=range(0, 31), value=7)
+    st.header("Jumeau Numérique : Test de Résilience")
+    st.write("Simulez une crise pour voir l'impact sur votre trésorerie et vos stocks.")
+    retard = st.slider("Retard fournisseur (jours)", 0, 30, 7)
     
-    twin = SupplyChainTwin(lead_time_days=14, daily_demand=40)
-    stock_levels = twin.simulate_disruption(delay_days=delay, duration_days=delay)
+    twin = SupplyChainTwin(lead_time_days=10, daily_demand=50)
+    levels = twin.simulate_disruption(delay_days=retard, duration_days=retard)
+    st.line_chart(levels)
     
-    fig_twin = px.line(y=stock_levels, title="Projection des niveaux de stock (30 jours)")
-    fig_twin.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Rupture")
-    st.plotly_chart(fig_twin, use_container_width=True)
+    if min(levels) <= 0:
+        st.error("⚠️ RUPTURE DE STOCK DÉTECTÉE. Action proactive requise.")
+    else:
+        st.success("Chaîne résiliente. Aucun impact majeur sur le service client.")
 
-else:
-    st.header("Warehouse Management (WMS 4.0)")
-    st.info("Visualisation de la segmentation ABC de l'inventaire")
-    # Données simulées pour le rendu visuel
-    abc_df = pd.DataFrame({
-        'Catégorie': ['A', 'B', 'C'],
-        'Nombre SKUs': [20, 30, 50],
-        'Valeur Flux': [8000, 1500, 500]
-    })
-    fig_abc = px.pie(abc_df, values='Valeur Flux', names='Catégorie', hole=.4)
-    st.plotly_chart(fig_abc)
-  # --- FOOTER (Identité) ---
+# --- FOOTER (Elvis CRINOT) ---
 st.markdown("---")
-footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
-
-with footer_col2:
-    st.markdown(
-        """
-        <div style='text-align: center; color: #6c757d; font-size: 0.9em;'>
-            <strong>AI-Driven Supply Chain Engine (S.C.E)</strong><br>
-            Developed by <strong>Elvis CRINOT</strong><br>
-            © 2026 | Industry 4.0 Initiative
-        </div>
-        """,
-        unsafe_allow_html=True
-  )
+st.markdown("<div style='text-align: center; color: grey;'>Developed by Elvis C. Kafui CRINOT | S.C.E 2026</div>", unsafe_allow_html=True)
+    
