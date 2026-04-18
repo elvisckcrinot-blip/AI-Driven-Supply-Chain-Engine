@@ -47,6 +47,7 @@ python -m unittest tests/test_engine.py
 ---
 
 ## Structure du Projet
+```text
 AI-Driven-SCE/
 ├── src/
 │   ├── demand_forecasting/   # Intelligence Artificielle et Lags
