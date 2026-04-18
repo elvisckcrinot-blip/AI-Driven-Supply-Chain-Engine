@@ -4,23 +4,35 @@ class SlottingOptimizer:
     def __init__(self):
         self.data = None
 
-    def load_inventory_data(self, data_path):
-        """Chargement des données de mouvements de stock."""
-        self.data = pd.read_csv(data_path)
+    def load_inventory_data(self, data_source):
+        """
+        Charge les données depuis un chemin (string) ou un objet fichier (Streamlit).
+        """
+        if isinstance(data_source, str):
+            self.data = pd.read_csv(data_source)
+        else:
+            # Pour Streamlit : lit directement l'objet UploadedFile
+            self.data = pd.read_csv(data_source)
 
     def calculate_abc_segmentation(self):
         """
-        Analyse ABC basée sur la fréquence de sortie (rotation).
-        Classe A : 20% des produits (80% des sorties) -> Près des quais.
-        Classe B : 30% des produits (15% des sorties) -> Zone intermédiaire.
-        Classe C : 50% des produits (5% des sorties) -> Fond de l'entrepôt.
+        Analyse ABC basée sur la fréquence de sortie (Pareto 80/20).
         """
-        # Calcul de la fréquence de sortie par SKU
-        rotation = self.data.groupby('sku_id')['quantity_out'].sum().reset_index()
+        if self.data is None or self.data.empty:
+            return pd.DataFrame()
+
+        # Nettoyage minimal pour éviter les crashs avec des données réelles
+        df = self.data.copy()
+        if 'sku_id' not in df.columns or 'quantity_out' not in df.columns:
+            raise ValueError("Le fichier doit contenir 'sku_id' et 'quantity_out'.")
+
+        # Calcul de la rotation
+        rotation = df.groupby('sku_id')['quantity_out'].sum().reset_index()
         rotation = rotation.sort_values(by='quantity_out', ascending=False)
         
         # Calcul du cumulatif
-        rotation['cum_percentage'] = 100 * rotation['quantity_out'].cumsum() / rotation['quantity_out'].sum()
+        total_out = rotation['quantity_out'].sum()
+        rotation['cum_percentage'] = 100 * rotation['quantity_out'].cumsum() / total_out
         
         # Attribution des classes
         def assign_class(pct):
@@ -31,10 +43,9 @@ class SlottingOptimizer:
         rotation['abc_class'] = rotation['cum_percentage'].apply(assign_class)
         return rotation
 
-    def suggest_relocation(self, current_abc_data):
-        """Génère des recommandations de réorganisation."""
-        recommendations = current_abc_data[current_abc_data['abc_class'] == 'A']
-        return recommendations[['sku_id', 'abc_class']].to_dict(orient='records')
+    def suggest_relocation(self, abc_results):
+        """Génère des recommandations de réorganisation pour les produits A."""
+        return abc_results[abc_results['abc_class'] == 'A'].to_dict(orient='records')
 
 if __name__ == "__main__":
-    print("Warehouse Management Module Initialized.")
+    print("Warehouse Management Module (WMS 4.0) Ready.")
