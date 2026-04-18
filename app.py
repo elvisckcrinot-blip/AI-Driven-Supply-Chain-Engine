@@ -1,12 +1,29 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from src.demand_forecasting.forecaster import DemandForecaster
-from src.warehouse_mgmt.slotting_optimizer import SlottingOptimizer
-from src.transport_control.carbon_tracker import TransportTracker
-from src.digital_twin.resilience_sim import SupplyChainTwin
+import os
+import sys
 
-# --- CONFIGURATION PROFESSIONNELLE ---
+# --- GESTION DES CHEMINS (Correction ModuleNotFoundError) ---
+# On ajoute le dossier 'src' au chemin de recherche de Python
+current_dir = os.path.dirname(__file__)
+src_path = os.path.join(current_dir, 'src')
+if src_path not in sys.path:
+    sys.path.append(src_path)
+
+# --- IMPORTS DES MODULES LOCAUX ---
+try:
+    from demand_forecasting.forecaster import DemandForecaster
+    from warehouse_mgmt.slotting_optimizer import SlottingOptimizer
+    from transport_control.carbon_tracker import TransportTracker
+    from digital_twin.resilience_sim import SupplyChainTwin
+except ImportError:
+    from src.demand_forecasting.forecaster import DemandForecaster
+    from src.warehouse_mgmt.slotting_optimizer import SlottingOptimizer
+    from src.transport_control.carbon_tracker import TransportTracker
+    from src.digital_twin.resilience_sim import SupplyChainTwin
+
+# --- CONFIGURATION ---
 st.set_page_config(page_title="S.C.E | Industrial Intelligence", page_icon="🏗️", layout="wide")
 
 st.markdown("""
@@ -19,34 +36,33 @@ st.markdown("""
 with st.sidebar:
     st.title("S.C.E 4.0")
     st.subheader("Pilotage de la Performance")
-    menu = st.radio("Sélecteur de Module", 
+    menu = st.radio("Selecteur de Module", 
                     ["Dashboard Global", "Demand Planning", "Warehouse Ops", "Transport & CO2", "Digital Twin"])
     st.markdown("---")
-    st.write(" *Outil de proactivité industrielle*")
+    st.write("Outil de proactivite industrielle")
 
 # --- 1. DASHBOARD GLOBAL ---
 if menu == "Dashboard Global":
     st.title("Tableau de Bord de Pilotage")
-    st.info("Intégrez vos données dans les modules spécifiques pour voir vos KPIs réels ici.")
+    st.info("Integrez vos donnees dans les modules specifiques pour voir vos KPIs reels ici.")
     col1, col2, col3 = st.columns(3)
     col1.metric("Optimisation Stock", "En attente", "0%")
-    col2.metric("Réduction CO2", "Objectif 2026", "-15%")
-    col3.metric("Indice de Résilience", "Sécurisé", "Stable")
+    col2.metric("Reduction CO2", "Objectif 2026", "-15%")
+    col3.metric("Indice de Resilience", "Securise", "Stable")
 
 # --- 2. DEMAND PLANNING (IA) ---
 elif menu == "Demand Planning":
-    st.header("Intelligence Prédictive & Anticipation")
+    st.header("Intelligence Predictive & Anticipation")
     uploaded_sales = st.file_uploader("Importer l'historique des ventes (CSV)", type="csv")
     
     if uploaded_sales:
         df_sales = pd.read_csv(uploaded_sales)
-        st.success("Données de vente intégrées.")
+        st.success("Donnees de vente integrees.")
         st.line_chart(df_sales.set_index(df_sales.columns[0]))
-        st.write(" **Avantage Financier :** Une prévision précise réduit les coûts de stockage de 15%.")
     else:
         st.info("Mode Simulation : Entrez une valeur manuellement.")
-        last_val = st.number_input("Dernières ventes", value=1000)
-        st.metric("Prédiction Prochaine Période", f"{int(last_val * 1.08)} unités")
+        last_val = st.number_input("Dernieres ventes", value=1000)
+        st.metric("Prediction Prochaine Periode", f"{int(last_val * 1.08)} unites")
 
 # --- 3. WAREHOUSE OPS (SLOTTING) ---
 elif menu == "Warehouse Ops":
@@ -61,15 +77,13 @@ elif menu == "Warehouse Ops":
         
         col_a, col_b = st.columns(2)
         with col_a:
-            fig = px.pie(results, values='quantity_out', names='abc_class', hole=.4, title="Répartition ABC")
+            fig = px.pie(results, values='quantity_out', names='abc_class', hole=.4, title="Repartition ABC")
             st.plotly_chart(fig)
         with col_b:
-            st.write(" **Top 5 SKUs Prioritaires**")
+            st.write("Top 5 SKUs Prioritaires")
             st.table(results[results['abc_class']=='A'].head(5))
-        
-        st.success(" **Gain Productivité :** Le repositionnement des articles A peut réduire les temps de marche de 25%.")
     else:
-        st.warning("Importez un fichier CSV (colonnes: sku_id, quantity_out) pour calculer vos gains.")
+        st.warning("Importez un fichier CSV (sku_id, quantity_out) pour calculer vos gains.")
 
 # --- 4. TRANSPORT & CO2 ---
 elif menu == "Transport & CO2":
@@ -81,17 +95,16 @@ elif menu == "Transport & CO2":
         tracker = TransportTracker()
         results = tracker.analyze_fleet_impact(df_t)
         st.dataframe(results.head(10))
-        st.metric("Total Émissions CO2", f"{results['co2_emissions'].sum():.2f} kg")
+        st.metric("Total Emissions CO2", f"{results['co2_emissions'].sum():.2f} kg")
     else:
         st.info("Entrez une simulation rapide :")
         w = st.number_input("Poids (Tonnes)", 10)
         d = st.number_input("Distance (km)", 500)
         st.write(f"Estimation : {w * d * 0.105} kg CO2 (Camion)")
 
-# --- 5. DIGITAL TWIN (RÉSILIENCE) ---
+# --- 5. DIGITAL TWIN (RESILIENCE) ---
 elif menu == "Digital Twin":
-    st.header("Jumeau Numérique : Test de Résilience")
-    st.write("Simulez une crise pour voir l'impact sur votre trésorerie et vos stocks.")
+    st.header("Jumeau Numerique : Test de Resilience")
     retard = st.slider("Retard fournisseur (jours)", 0, 30, 7)
     
     twin = SupplyChainTwin(lead_time_days=10, daily_demand=50)
@@ -99,11 +112,11 @@ elif menu == "Digital Twin":
     st.line_chart(levels)
     
     if min(levels) <= 0:
-        st.error("⚠️ RUPTURE DE STOCK DÉTECTÉE. Action proactive requise.")
+        st.error("RUPTURE DE STOCK DETECTEE. Action proactive requise.")
     else:
-        st.success("Chaîne résiliente. Aucun impact majeur sur le service client.")
+        st.success("Chaine resiliente.")
 
-# --- FOOTER (Elvis CRINOT) ---
+# --- FOOTER ---
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: grey;'>Developed by Elvis C. Kafui CRINOT | S.C.E 2026</div>", unsafe_allow_html=True)
     
