@@ -1,32 +1,62 @@
-# AI-Driven-Supply-Chain-Engine
-A high-performance, AI-powered alternative to legacy ERPs. Built with Python microservices for Cognitive Demand Planning, Smart Warehousing (WMS 4.0), and Digital Twin simulations.
 # AI-Driven Supply Chain Engine (S.C.E)
 
-## Project Overview
-The AI-Driven Supply Chain Engine (S.C.E) is a modular, high-performance software suite designed to optimize industrial logistics operations. It serves as a lightweight, agile alternative to traditional monolithic ERP systems by leveraging Machine Learning and a microservices architecture. The objective is to provide real-time decision-making capabilities with low integration costs and high scalability.
+Solution logicielle modulaire pilotee par l IA pour l optimisation des flux industriels, le Smart Warehousing et la resilience logistique.
 
-## Core Architecture
-The system is built on a microservices framework, allowing independent deployment and scaling of specialized modules:
+---
 
-* **Demand Forecasting Engine:** Utilizes Random Forest and XGBoost algorithms to predict market needs with dynamic variable integration.
-* **Smart Warehouse Management (WMS 4.0):** Advanced slotting optimization and IoT integration for real-time inventory tracking.
-* **Logistics Digital Twin:** A simulation environment for stress-testing supply chain resilience through "What-if" scenarios.
-* **Hyper-Connectivity Gateway:** RESTful API architecture for seamless integration with external providers and legacy systems.
+## Architecture et Modules
+Le S.C.E repose sur une architecture de micro-services Python, chacun repondant a un defi critique de la Supply Chain 4.0 :
 
-## Key Technical Features
-* **Cognitive Analysis:** Predictive modeling that outpaces standard statistical methods used in legacy ERPs.
-* **Data Integrity:** Multi-source data synchronization (SQL, NoSQL, and flat files) with automated cleaning protocols.
-* **Industrial Resilience:** Built-in risk assessment tools for proactive supply chain adjustments.
-* **Open Source Foundation:** Developed using Python-based professional libraries to eliminate exorbitant licensing fees.
+* Demand Forecasting (IA) : Prediction de la demande via Random Forest. Anticipe les ruptures et optimise les niveaux de stock.
+* WMS 4.0 (Smart Warehouse) : Optimisation du Slotting par segmentation ABC (Pareto) pour reduire les temps de picking.
+* Carbon Tracker : Calculateur d empreinte CO2 multi-modal (Camion, Train, Avion, Navire) pour une logistique durable.
+* Digital Twin (Jumeau Numerique) : Stress-test de la chaine logistique face aux crises (retards fournisseurs, blocages portuaires).
 
-## Directory Structure
-```text
+---
+
+## Interface Utilisateur (Live Demo)
+L application dispose d une interface Streamlit interactive permettant d importer des donnees industrielles externes.
+
+### Procedure de test
+1. Accedez a l interface via le lien de deploiement Streamlit Cloud.
+2. Utilisez les fichiers modeles situes dans le dossier /data pour tester les fonctionnalites :
+    * sales_history.csv : Pour la prevision de la demande.
+    * inventory_data.csv : Pour l optimisation d entrepot.
+    * transport_logs.csv : Pour l analyse carbone.
+
+---
+
+## Installation et Deploiement Local
+
+# 1. Cloner le projet
+git clone https://github.com/elvisckcrinot-blip/AI-Driven-Supply-Chain-Engine.git
+
+# 2. Installer les dependances industrielles
+pip install -r requirements.txt
+
+# 3. Lancer le moteur
+streamlit run app.py
+
+---
+
+## Fiabilite et Tests
+Le projet inclut une suite de tests unitaires pour garantir la precision des calculs logistiques et la stabilite du code :
+
+python -m unittest tests/test_engine.py
+
+---
+
+## Structure du Projet
 AI-Driven-SCE/
 ├── src/
-│   ├── demand_forecasting/      # Predictive analytics and ML models
-│   ├── warehouse_mgmt/         # Stock and facility optimization
-│   ├── transport_control/      # Flow visibility and carbon tracking
-│   └── digital_twin/           # Simulation and modeling scripts
-├── models/                     # Serialized AI models (.pkl)
-├── data/                       # Industrial datasets and schemas
-└── tests/                      # Unit testing and validation
+│   ├── demand_forecasting/   # Intelligence Artificielle et Lags
+│   ├── warehouse_mgmt/      # Optimisation ABC et Slotting
+│   ├── transport_control/   # Calculateur CO2 GLEC
+│   └── digital_twin/        # Simulation de resilience
+├── models/                  # Modeles .pkl auto-geres
+├── data/                    # Templates CSV (Prets a l emploi)
+├── tests/                   # Validation unitaire du moteur
+└── app.py                   # Interface Dashboard Industrielle
+
+---
+Développé par Elvis CRINOT | Expert en Logistique et Supply Chain 4.0
